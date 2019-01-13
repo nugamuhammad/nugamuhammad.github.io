@@ -6,5 +6,6 @@ categories: blog
 author: Muhammad Ardivan
 tags: Intro
 ---
-Assalamu'alaikum
-Hallo, ini post pertama saya
+## Assalamu'alaikum
+
+>Ini post pertama saya
