@@ -13,6 +13,7 @@ description: > # this means to ignore newlines until "baseurl:"
 baseurl: "" # the subpath of your site, e.g. /blog
 github_username:  nuga99
 theme: jekyll-theme-hacker
+permalink: /:categories/:day/:month/:year/:title:output_ext
 
 # Build settings
 markdown: kramdown
