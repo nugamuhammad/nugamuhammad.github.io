@@ -1,0 +1,3 @@
+title: My Journey
+theme: jekyll-theme-hacker
+gem "github-pages", group: :jekyll_plugins
