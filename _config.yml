@@ -5,6 +5,9 @@
 # For technical reasons, this file is *NOT* reloaded automatically when you use
 # 'jekyll serve'. If you change this file, please restart the server process.
 
+# Gems
+gems: [jekyll-paginate]
+
 # Site settings
 title: My Journey
 email: nugamuhammad@gmail.com
@@ -14,6 +17,7 @@ baseurl: "" # the subpath of your site, e.g. /blog
 github_username:  nuga99
 theme: jekyll-theme-hacker
 permalink: /:categories/:day/:month/:year/:title:output_ext
+paginate: 5
 
 # Build settings
 markdown: kramdown
