@@ -6,5 +6,5 @@ categories: blog
 author: Muhammad Ardivan
 tags: Perkuliahan
 ---
-> Hari ini saya pulang lebih cepat dari biasanya, yaitu pukul 16.07
+> Hari ini saya pulang lebih cepat dari biasanya, yaitu pukul 16.07 WIB
 #### *Disclaimer : Post ini dibuat hanya untuk hiburan semata, jika merasa tidak terhibur yasudahlah*
