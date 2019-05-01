@@ -11,7 +11,7 @@ tags: Review Barang
 
 #### Rate: 7.5/10
 Merk **Lion Star** kualitas oke dengan dimensi kurang lebih `36.7 x 36.7 x H 46.5 cm` cocok untuk sehari-hari.<br>
-Pilihan warna banyak dan variasi bentuk umumnya sama.
+Pilihan warna banyak dan variasi bentuk sama saja.
 
 ![useful image]({{ site.url }}/assets/images/kursi_lion.jpeg){:class="img-responsive"}
 
