@@ -5,6 +5,7 @@ date:   2019-05-01 22:55:00 +0700
 categories: blog
 author: Muhammad Ardivan
 tags: Review Barang
+published: false
 ---
 
 Assalamu'alaikum kawan-kawan akhirnya bisa nge-post lagi, jadi disini saya akan me-*review* barang yang eksistensinya sangat dibutuhkan oleh masyarakat luas. Langsung aja cekidot!<br><br>
