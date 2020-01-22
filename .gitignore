@@ -1,2 +1,4 @@
 .sass-cache
 feed.xml
+vendor/
+.bundle/
