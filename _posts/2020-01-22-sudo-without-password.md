@@ -71,7 +71,7 @@ How to run `sudo` command without prompting password:
     $USER ALL=(ALL) NOPASSWD: ALL # $USER is your user in Unix/Linux host.
    ```
 
-4. To give it a try, you can save the new `/etc/sudoers/` file and do:
+4. To give it a try, you can save the new `/etc/sudoers` file and do:
     ```bash
     $ sudo su
     # root@your-pc-name:/home/user# 
