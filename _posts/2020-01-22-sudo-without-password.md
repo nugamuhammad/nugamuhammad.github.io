@@ -9,7 +9,7 @@ tags: Linux/Unix,Security
 
 How to run `sudo` command without prompting password:
 
-1. Create backup of `/etc/sudoers/`:
+1. Create backup of `/etc/sudoers`:
     ```bash
     $ sudo cp /etc/sudoers /etc/sudoers.bak
     ```
