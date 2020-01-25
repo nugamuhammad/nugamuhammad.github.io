@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/css/style.css?v=9d5b7d6c2e3c8eb11ffabd98f4943a4d52906468">
+    <script src="//instant.page/1.1.0" type="module" integrity="sha384-EwBObn5QAxP8f09iemwAJljc+sU+eUXeL9vSBw1eNmVarwhKk2F9vBEpaN9rsrtp"></script>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <a href="/" style="text-decoration:none"><h1 style="margin-left:1px">my_posts.sh</h1></a>
+        <h2>Website</h2>
+        <h2 style="color:white">Created with <i>randomness</i> by Muhammad Ardivan </h2>
+        <a href="https://dev.to/n_1499">
+          <img src="https://d2fltix0v2e0sb.cloudfront.net/dev-badge.svg" alt="Nuga's DEV Profile" height="30" width="30" />
+        </a>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <small>22 January 2020</small>
+<h1>Basic cracking a program using Cutter</h1>
+
+<p class="view">by Muhammad Ardivan</p>
+
+<p style="text-align:center"><img src="http://localhost:4000/assets/images/radare-image-logo.png" alt="useful image" /></p>
+
+<ol>
+  <li>
+    <p>Install Cutter from this link <a target="_blank" href="https://github.com/radareorg/cutter">Cutter Radare</a>.</p>
+  </li>
+  <li>
+    <p>Create a simple program called <code class="language-plaintext highlighter-rouge">vulnerable_license.c</code>.</p>
+
+    <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="cp">#include &lt;string.h&gt;
+</span> <span class="cp">#include &lt;stdio.h&gt;
+</span>        
+ <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+     <span class="k">if</span><span class="p">(</span><span class="n">argc</span><span class="o">==</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+             <span class="n">printf</span><span class="p">(</span><span class="s">"Checking License: %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+             <span class="k">if</span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">"AABB-CCDD-20-OK"</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                     <span class="n">printf</span><span class="p">(</span><span class="s">"Access Granted!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+             <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+                     <span class="n">printf</span><span class="p">(</span><span class="s">"WRONG!</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+             <span class="p">}</span>
+         <span class="p">}</span> 
+     <span class="k">else</span> <span class="p">{</span>
+             <span class="n">printf</span><span class="p">(</span><span class="s">"Usage: &lt;key&gt;</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+     <span class="p">}</span>
+     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+ <span class="p">}</span>
+</code></pre></div>    </div>
+    <p>This program basically check the correct license to get the access of the program.</p>
+  </li>
+  <li>Then, compile the program using default <code class="language-plaintext highlighter-rouge">gcc</code> option.
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>gcc vulnerable_license.c <span class="nt">-o</span> vulnerable_license
+</code></pre></div>    </div>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> Example: <span class="k">if </span>your input is <span class="s2">"AABB-CCDD-20-OK"</span> you get the access, <span class="k">else </span>you get <span class="s2">"WRONG!"</span><span class="nb">.</span>
+
+ <span class="nv">$ </span>./vulnerable_license AABB-CCDD-21-MM 
+ Checking License: AABB-CCDD-21-MM
+ WRONG!
+
+
+ <span class="nv">$ </span>./vulnerable_license AABB-CCDD-20-OK 
+ Checking License: AABB-CCDD-20-OK
+ Access Granted!
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Open your <code class="language-plaintext highlighter-rouge">Cutter</code> app and load the compiled file before and make sure to checked the write mode.</p>
+
+    <p style="text-align:center"><img src="http://localhost:4000/assets/images/cutter-app.png" alt="useful image" /></p>
+
+    <p style="text-align:center"><img src="http://localhost:4000/assets/images/load-write-mode-cutter.png" alt="useful image" /></p>
+  </li>
+  <li>You will look something like this.
+    <p><img src="http://localhost:4000/assets/images/all-vuln-license.png" alt="useful image" /></p>
+
+    <p>We interested in <code class="language-plaintext highlighter-rouge">main</code> function, because we see there’s a checker, so we need to bypass the checker by changing the flow of the program.</p>
+
+    <p style="text-align:center"><img src="http://localhost:4000/assets/images/vulnerable-license.png" alt="useful image" /></p>
+
+    <p>From the picture above, there’s some mechanism to change the flow by using <code class="language-plaintext highlighter-rouge">reverse jump</code> in Cutter. We tend to change the flow of result <code class="language-plaintext highlighter-rouge">test eax eax</code>, by default if the result not <code class="language-plaintext highlighter-rouge">zero</code> or <code class="language-plaintext highlighter-rouge">the string is not same</code> it will jump to “WRONG!” so we need to reverse the logic, by allowing the <code class="language-plaintext highlighter-rouge">wrong string</code> to grant the access.</p>
+  </li>
+  <li>
+    <p>You need to click the <code class="language-plaintext highlighter-rouge">jne 0x11b9</code> in my case, other computers maybe different. <code class="language-plaintext highlighter-rouge">Edit -&gt; Reverse Jump</code>.</p>
+
+    <p>The new change will similar like this.</p>
+
+    <p style="text-align:center"><img src="http://localhost:4000/assets/images/access-license.png" alt="useful image" /></p>
+
+    <p>By runtime the flow of the program is changed.</p>
+  </li>
+  <li>Save the changes and try to run the program again.
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>./vulnerable_license AABB-CCDD-20-Ok
+ Checking License: AABB-CCDD-20-Ok
+ Access Granted!
+
+ <span class="nv">$ </span>./vulnerable_license AABB-CCDD-20-OK
+ Checking License: AABB-CCDD-20-OK
+ WRONG!
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<p>Source: <a target="_blank" href="https://www.megabeets.net/5-ways-to-patch-binaries-with-cutter/">Patch Binaries with Cutter</a></p>
+
+
+
+  <small>tags: <em>Reverse-Engineering,Security,Cracking</em></small>
+
+
+      </section>
+    </div>
+
+    
+  </body>
+</html>
