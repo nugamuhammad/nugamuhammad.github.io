@@ -74,5 +74,5 @@ How to run `sudo` command without prompting password:
 4. To give it a try, you can save the new `/etc/sudoers` file and do:
     ```bash
     $ sudo su
-    # root@your-pc-name:/home/user# 
+    root@your-pc-name:/home/user# 
     ```
