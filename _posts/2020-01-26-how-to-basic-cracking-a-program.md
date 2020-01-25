@@ -84,7 +84,7 @@ tags: Reverse-Engineering,Security,Cracking
 7. Save the changes and try to run the program again.
    ```bash
     $ ./vulnerable_license AABB-CCDD-21-MM 
-    Checking License: AABB-CCDD-21-MM 
+    Checking License: AABB-CCDD-21-MM
     Access Granted!
 
     $ ./vulnerable_license AABB-CCDD-20-OK
