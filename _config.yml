@@ -10,7 +10,7 @@ gems: [jekyll-paginate]
 
 # Site settings
 title: my_posts.sh
-email: nugamuhammad@gmail.com
+email: redacted@redacted.com
 description: > # this means to ignore newlines until "baseurl:"
 baseurl: "" # the subpath of your site, e.g. /blog
 github_username: xb4dc0d3
