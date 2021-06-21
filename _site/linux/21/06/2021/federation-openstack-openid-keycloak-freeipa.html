@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/assets/css/style.css?v=d6c6aa226f8c40b782522d79942a45e28e349329">
+    <script src="//instant.page/1.1.0" type="module" integrity="sha384-EwBObn5QAxP8f09iemwAJljc+sU+eUXeL9vSBw1eNmVarwhKk2F9vBEpaN9rsrtp"></script>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <a href="/" style="text-decoration:none"><h1 style="margin-left:1px">my_posts.sh</h1></a>
+        <h2>Website</h2>
+        <h2 style="color:white">Just an ordinary person</h2>
+         <a>
+          <img src="http://www.hackthebox.eu/badge/image/92473" alt="Hack The Box">
+         </a>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <small>21 June 2021</small>
+<h1>Federation and Identity Brokering on OpenStack using OpenID and Keycloak + FreeIPA</h1>
+
+<p class="view">by xb4dc0d3</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ol>
+  <li>FreeIPA and OpenStack is already configured. OpenStack is configured using <a href="https://docs.openstack.org/kolla-ansible/latest/">Kolla Ansible</a>.</li>
+  <li>Keycloak is already configured and federated with FreeIPA (directory service).</li>
+  <li>In this example the current IP and port that has been used
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Keycloak: http://10.20.20.14:8081
+OpenStack: http://10.20.20.100:5000
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="setup-openid-configuration-on-keycloak">Setup OpenID configuration on Keycloak</h2>
+<p><b>This operation is performed on the Keycloak Dashboard.</b></p>
+
+<ol>
+  <li>Go to the <b>realm</b> that previously created, for example “freeipa-realm”, select <code class="language-plaintext highlighter-rouge">Configure &gt; Clients &gt; Create</code>, then fill the following section
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> Client ID: openstack-client 
+ Client Protocol: openid-connect
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Adjust the authentication flow using OpenID.</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> Client ID: openstack-client 
+ Client Protocol: openid-connect
+ Access Type: Confidential <span class="c"># define the username/password mechanism</span>
+ Standard Flow Enabled: On
+ Implicit Flow Enabled: On
+ Direct Access Grants Enabled: On
+
+ Valid Redirect URIs <span class="k">*</span>: https://10.20.20.100:5000/v3/OS-FEDERATION/identity_providers/openidtest/protocols/openid/auth 
+ Backchannel Logout Session Required: On
+</code></pre></div>    </div>
+
+    <p style="color:orange">* Note: The valid redirect URIs must match the endpoint on OpenStack Keystone </p>
+  </li>
+  <li>
+    <p>On <code class="language-plaintext highlighter-rouge">Clients &gt; Credentials</code> tab, you will see the Client ID and Secret.</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> Client Authenticator: Client ID
+ Secret: XXXXXXXXXXXXX
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h2 id="configure-openid-on-keystone-and-horizon">Configure OpenID on Keystone and Horizon</h2>
+
+<p><b>This operation is performed on the OpenStack host.</b></p>
+
+<ol>
+  <li>
+    <p>Create directories for Keystone and Horizon services. This directory is used to put the configured files.</p>
+
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span><span class="nb">sudo mkdir</span> /etc/kolla/config/horizon
+ <span class="nv">$ </span><span class="nb">sudo mkdir</span> /etc/kolla/config/keystone
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Create the file and change the owner.</p>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span><span class="nb">sudo touch</span> /etc/kolla/config/horizon/local_settings
+ <span class="nv">$ </span><span class="nb">sudo touch</span> /etc/kolla/config/keystone/keystone.conf
+ <span class="nv">$ </span><span class="nb">sudo touch</span> /etc/kolla/config/keystone/wsgi-keystone.conf
+
+ <span class="nv">$ </span><span class="nb">sudo chown</span> <span class="nt">-R</span> <span class="nv">$USER</span>:<span class="nv">$USER</span> /etc/kolla/config/horizon/
+ <span class="nv">$ </span><span class="nb">sudo chown</span> <span class="nt">-R</span> <span class="nv">$USER</span>:<span class="nv">$USER</span> /etc/kolla/config/keystone/
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="configure-federating-resource-on-keystone-service">Configure federating resource on Keystone service</h3>
+<ol>
+  <li>
+    <p>Create identity provider object on Keystone</p>
+
+    <p>Remote id value is an issuer on OpenID. To see the issuer you can obtained from the OpenID configuration.
+ By accessing the Keycloak <code class="language-plaintext highlighter-rouge">.well-known/openid-configuration</code> endpoint.</p>
+
+    <p>For example: <br />
+ <code class="language-plaintext highlighter-rouge">http://10.20.20.14:8081/auth/realms/freeipa-realm/.well-known/openid-configuration</code></p>
+
+    <p>Then, create the object by running the command below</p>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>openstack identity provider <span class="nb">set</span> <span class="nt">--remote-id</span> http://10.20.20.14:8081/auth/realms/freeipa-realm openidtest
+</code></pre></div>    </div>
+  </li>
+  <li>Create a mapping rules for remote user attribute. The file created is in the form of json with the name rules.json.
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span><span class="nb">cat</span> <span class="o">&gt;</span> rules.json <span class="o">&lt;&lt;</span><span class="no">EOF</span><span class="sh">
+ [
+     {
+         "local": [
+             {
+                 "user": {
+                     "name": "{0}"
+                 },
+                 "group": {
+                     "domain": {
+                         "name": "Default"
+                     },
+                     "name": "federated_users"
+                 }
+             }
+         ],
+         "remote": [
+             {
+                 "type": "HTTP_OIDC_ISS"
+             }
+         ]
+     }
+ ]
+</span><span class="no"> EOF
+
+</span> <span class="nv">$ </span>openstack mapping create <span class="nt">--rules</span> rules.json openidtest_mapping
+</code></pre></div>    </div>
+  </li>
+  <li>Create a group for the role assignment on Keystone
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>openstack group create federated_users
+</code></pre></div>    </div>
+  </li>
+  <li>Create a project on Keystone
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>openstack project create federated_project
+</code></pre></div>    </div>
+  </li>
+  <li>Define the roles for group members
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>openstack role add <span class="nt">--group</span> federated_users <span class="nt">--project</span> federated_project member
+</code></pre></div>    </div>
+  </li>
+  <li>Create a federation protocol for the identity provider based on the mapping rules that has been created.
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>openstack federation protocol create openid <span class="nt">--mapping</span> openidtest_mapping <span class="nt">--identity-provider</span> openidtest
+</code></pre></div>    </div>
+
+    <p style="color: orange">* Note: make sure the federation protocol name matches the specified valid keystone authentication rules, such as openid and saml2. </p>
+  </li>
+</ol>
+
+<p>https://docs.openstack.org/keystone/latest/admin/federation/configure_federation.html#sp-prerequisites</p>
+
+<h3 id="configure-apache-authentication-module-to-openid-connect">Configure Apache Authentication Module to OpenID-Connect</h3>
+
+<ol>
+  <li>Create a protected endpoint
+    <div class="language-conf highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+ <span class="c"># Keystone
+</span> &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/&lt;<span class="n">IDENTITYPROVIDER</span>&gt;/<span class="n">protocols</span>/&lt;<span class="n">PROTOCOL</span>&gt;/<span class="n">auth</span>&gt;
+ <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+ <span class="n">AuthType</span> [...]
+ ...
+ &lt;/<span class="n">Location</span>&gt;
+
+ <span class="c"># Horizon (SSO)
+</span> &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">auth</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">websso</span>/&lt;<span class="n">PROTOCOL</span>&gt;&gt;
+ <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+ <span class="n">AuthType</span> [...]
+ ...
+ &lt;/<span class="n">Location</span>&gt;
+
+ &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">auth</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/&lt;<span class="n">IDENTITYPROVIDER</span>&gt;/<span class="n">protocols</span>/&lt;<span class="n">PROTOCOL</span>&gt;/<span class="n">websso</span>&gt;
+ <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+ <span class="n">AuthType</span> [...]
+ ...
+ &lt;/<span class="n">Location</span>&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>Configure the authentication module</p>
+
+    <p>This configuration is for Apache web server on virtualhost keystone, set to OIDC option.</p>
+    <div class="language-conf highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">OIDCClaimPrefix</span> <span class="s2">"OIDC-"</span>
+ <span class="n">OIDCResponseType</span> <span class="s2">"id_token"</span>
+ <span class="n">OIDCScope</span> <span class="s2">"openid email profile"</span>
+ <span class="n">OIDCProviderMetadataURL</span> <span class="n">https</span>://&lt;<span class="n">URL_IDENTITY_PROVIDER</span>&gt;/.<span class="n">well</span>-<span class="n">known</span>/<span class="n">openid</span>-<span class="n">configuration</span>
+ <span class="n">OIDCClientID</span> &lt;<span class="n">openid_client_id</span>&gt;
+ <span class="n">OIDCClientSecret</span> &lt;<span class="n">openid_client_secret</span>&gt;
+ <span class="n">OIDCCryptoPassphrase</span> &lt;<span class="n">random</span> <span class="n">string</span>&gt; <span class="c"># random string
+</span> <span class="n">OIDCRedirectURI</span> <span class="n">https</span>://&lt;<span class="n">URL_HORIZON</span>&gt;/<span class="n">v3</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/&lt;<span class="n">IDENTITYPROVIDER</span>&gt;/<span class="n">protocols</span>/&lt;<span class="n">PROTOCOL</span>&gt;/<span class="n">auth</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Then add the configuration to <code class="language-plaintext highlighter-rouge">/etc/kolla/config/keystone/wsgi-keystone.conf</code>.
+    <div class="language-conf highlighter-rouge"><div class="highlight"><pre class="highlight"><code> &lt;<span class="n">VirtualHost</span> *:<span class="m">5000</span>&gt;
+ ….
+ ….
+
+ <span class="n">ServerName</span> <span class="n">https</span>://<span class="m">10</span>.<span class="m">20</span>.<span class="m">20</span>.<span class="m">100</span>:<span class="m">5000</span>
+ <span class="n">OIDCClaimPrefix</span> <span class="s2">"OIDC-"</span>
+ <span class="n">OIDCResponseType</span> <span class="s2">"id_token"</span>
+ <span class="n">OIDCScope</span> <span class="s2">"openid email profile"</span>
+ <span class="n">OIDCProviderMetadataURL</span> <span class="n">http</span>://<span class="m">10</span>.<span class="m">20</span>.<span class="m">20</span>.<span class="m">14</span>:<span class="m">8081</span>/<span class="n">auth</span>/<span class="n">realms</span>/<span class="n">freeipa</span>-<span class="n">realm</span>/.<span class="n">well</span>-<span class="n">known</span>/<span class="n">openid</span>-<span class="n">configuration</span> 
+ <span class="n">OIDCClientID</span> <span class="n">openstack</span>-<span class="n">client</span> <span class="c"># keycloak client id
+</span> <span class="n">OIDCClientSecret</span> <span class="n">xxxx</span>-<span class="n">xxxx</span>-<span class="n">xxxx</span>-<span class="n">xxxx</span>-<span class="n">xxxx</span> <span class="c"># keycloak client secret
+</span> <span class="n">OIDCCryptoPassphrase</span> <span class="n">openstack</span>
+ <span class="n">OIDCRedirectURI</span> <span class="n">https</span>://<span class="m">10</span>.<span class="m">20</span>.<span class="m">20</span>.<span class="m">100</span>:<span class="m">5000</span>/<span class="n">v3</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/<span class="n">openidtest</span>/<span class="n">protocols</span>/<span class="n">openid</span>/<span class="n">auth</span> 
+
+ <span class="c"># Keystone
+</span> &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/<span class="n">openidtest</span>/<span class="n">protocols</span>/<span class="n">openid</span>/<span class="n">auth</span>&gt;
+     <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+     <span class="n">AuthType</span> <span class="n">openid</span>-<span class="n">connect</span>
+     <span class="n">LogLevel</span> <span class="n">debug</span>
+ &lt;/<span class="n">Location</span>&gt;
+
+ <span class="c"># Horizon
+</span> &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">auth</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">websso</span>/<span class="n">openid</span>&gt;
+     <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+     <span class="n">AuthType</span> <span class="n">openid</span>-<span class="n">connect</span>
+ &lt;/<span class="n">Location</span>&gt;
+
+ &lt;<span class="n">Location</span> /<span class="n">v3</span>/<span class="n">auth</span>/<span class="n">OS</span>-<span class="n">FEDERATION</span>/<span class="n">identity_providers</span>/<span class="n">openidtest</span>/<span class="n">protocols</span>/<span class="n">openid</span>/<span class="n">websso</span>&gt;
+     <span class="n">Require</span> <span class="n">valid</span>-<span class="n">user</span>
+     <span class="n">AuthType</span> <span class="n">openid</span>-<span class="n">connect</span>
+ &lt;/<span class="n">Location</span>&gt;
+
+ ...
+ ...
+ ...
+ &lt;/<span class="n">VirtualHost</span>&gt;
+</code></pre></div>    </div>
+
+    <p style="color:orange">* Note: <br /></p>
+    <p>– <b>OIDCProviderMetadataURL</b> is located in <code class="language-plaintext highlighter-rouge">freeipa-realm &gt; Configure &gt; Realm Settings</code>, then select Endpoints and click “Endpoints OpenID Endpoint Configuration”.</p>
+  </li>
+</ol>
+
+<h3 id="configure-keystone">Configure Keystone</h3>
+<p>This configuration is performed on <code class="language-plaintext highlighter-rouge">/etc/kolla/config/keystone/keystone.conf</code>.</p>
+
+<ol>
+  <li>Add the authentication method.
+    <div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nn">[auth]</span>
+ <span class="py">methods</span> <span class="p">=</span> <span class="s">password,token,saml2,openid</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Configure the remote ID attribute.
+    <div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nn">[openid]</span>
+ <span class="py">remote_id_attribute</span> <span class="p">=</span> <span class="s">HTTP_OIDC_ISS</span>
+
+ <span class="nn">[federation]</span>
+ <span class="py">remote_id_attribute</span> <span class="p">=</span> <span class="s">HTTP_OIDC_ISS</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Add the Trusted Dashboard (WebSSO).
+    <div class="language-ini highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nn">[federation]</span>
+ <span class="py">trusted_dashboard</span> <span class="p">=</span> <span class="s">https://10.20.20.100/auth/websso/</span>
+ <span class="py">sso_callback_template</span> <span class="p">=</span> <span class="s">/etc/keystone/sso_callback_template.html</span>
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="configure-horizon">Configure Horizon</h3>
+
+<p>The configuration is performed on <code class="language-plaintext highlighter-rouge">/etc/kolla/config/horizon/local_settings</code>.</p>
+
+<ol>
+  <li>Enable the SSO
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">WEBSSO_ENABLED</span> <span class="o">=</span> <span class="bp">True</span>
+</code></pre></div>    </div>
+  </li>
+  <li>Configure the provider for SSO
+    <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="n">WEBSSO_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+     <span class="p">(</span><span class="s">"credentials"</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s">"Keystone Credentials"</span><span class="p">)),</span>
+     <span class="p">(</span><span class="s">"openidtest_openid"</span><span class="p">,</span> <span class="s">"Keycloak - OpenID Connect"</span><span class="p">),</span>
+ <span class="p">)</span>
+
+ <span class="c1"># NOTE: The value is expected to be a tuple formatted as: (&lt;idp_id&gt;, &lt;protocol_id&gt;).
+</span> <span class="n">WEBSSO_IDP_MAPPING</span> <span class="o">=</span> <span class="p">{</span>
+     <span class="s">"openidtest_openid"</span><span class="p">:</span> <span class="p">(</span><span class="s">"openidtest"</span><span class="p">,</span> <span class="s">"openid"</span><span class="p">),</span>
+ <span class="p">}</span>
+
+</code></pre></div>    </div>
+    <h3 id="reconfigure-openstack">Reconfigure OpenStack</h3>
+    <div class="language-bash highlighter-rouge"><div class="highlight"><pre class="highlight"><code> <span class="nv">$ </span>kolla-ansible <span class="nt">-i</span> multinode reconfigure
+</code></pre></div>    </div>
+  </li>
+</ol>
+
+<h3 id="reference">Reference</h3>
+<p><a href="https://docs.openstack.org/keystone/ussuri/admin/federation/configure_federation.html#create-a-mapping">https://docs.openstack.org/keystone/ussuri/admin/federation/configure_federation.html#create-a-mapping</a></p>
+
+<p><a href="https://github.com/keycloak/keycloak-documentation/blob/master/securing_apps/topics/oidc/mod-auth-openidc.adoc">https://github.com/keycloak/keycloak-documentation/blob/master/securing_apps/topics/oidc/mod-auth-openidc.adoc</a></p>
+
+<p><a href="http://wsfdl.com/openstack/2016/02/01/Keystone-Google-Federation-With-OpenID.html">http://wsfdl.com/openstack/2016/02/01/Keystone-Google-Federation-With-OpenID.html</a></p>
+
+<p><a href="https://www.meshcloud.io/2017/08/25/federated-authentication-with-the-openstack-cli/">https://www.meshcloud.io/2017/08/25/federated-authentication-with-the-openstack-cli/</a></p>
+
+<p><a href="https://docs.openstack.org/keystone/pike/configuration/samples/keystone-conf.html">https://docs.openstack.org/keystone/pike/configuration/samples/keystone-conf.html</a></p>
+
+<p><a href="http://www.gazlene.net/federation-devstack.html">http://www.gazlene.net/federation-devstack.html</a></p>
+
+
+
+  <small>tags: <em>Cloud,Sysadmin,Auth</em></small>
+
+
+      </section>
+    </div>
+
+    
+  </body>
+</html>
