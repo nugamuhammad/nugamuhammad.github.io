@@ -3,7 +3,7 @@ layout: post
 title:  "Rasa Hari Pertama Kuliah"
 date:   2019-02-04 19:29:00 +0700
 categories: blog
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Perkuliahan
 published: false
 ---

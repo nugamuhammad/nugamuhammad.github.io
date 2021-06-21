@@ -3,7 +3,7 @@ layout: post
 title:  "Basic cracking a program using Cutter"
 date:   2020-01-25 14.30:00 +0700
 categories: linux
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Reverse-Engineering,Security,Cracking
 ---
 

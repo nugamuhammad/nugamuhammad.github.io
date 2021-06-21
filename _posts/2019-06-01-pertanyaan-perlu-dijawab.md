@@ -3,7 +3,7 @@ layout: post
 title:  "Jawaban Pertanyaan Yang Perlu Dijawab Dengan Singkat"
 date:   2019-07-01 22:55:00 +0700
 categories: blog
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Tips Interview
 published: false
 ---

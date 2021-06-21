@@ -3,7 +3,7 @@ layout: post
 title:  "Sudo without password"
 date:   2020-01-22 20:55:00 +0700
 categories: linux
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Linux/Unix,Security
 ---
 

@@ -3,7 +3,7 @@ layout: post
 title:  "Review Kursi"
 date:   2019-05-01 22:55:00 +0700
 categories: blog
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Review Barang
 published: false
 ---

@@ -3,7 +3,7 @@ layout: post
 title:  "Throwback Kepanitaan: Divisi Perlengkapan"
 date:   2019-01-31 21:00:00 +0700
 categories: blog
-author: Muhammad Ardivan
+author: xb4dc0d3
 tags: Kepanitiaan
 ---
 
